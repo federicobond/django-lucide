@@ -1,6 +1,11 @@
 
 # Changelog
 
+## 1.21.0 (2026-06-22)
+
+* Upgrade lucide icons to v1.21.0 (1668 → 1737 icons, 246 → 249 aliases)
+* Align the package version with the bundled lucide icons version going forward
+
 ## 1.3.1 (2025-02-04)
 
 * Update package author and license information
