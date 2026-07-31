@@ -6,7 +6,7 @@ requires = [
 
 [project]
 name = "django-lucide"
-version = "1.21.0"
+version = "1.28.0"
 description = "Use lucide in your Django and Jinja templates."
 readme = "README.md"
 keywords = [
