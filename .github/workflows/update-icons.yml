@@ -34,10 +34,13 @@ jobs:
           # Wersja jest w CHANGELOG.md lub pyproject.toml
           # Sprawdzamy też ile ikon mamy
           python -c "
+          import json
           from zipfile import ZipFile
           with ZipFile('src/lucide/lucide.zip', 'r') as zf:
               icons = [n for n in zf.namelist() if n.endswith('.svg')]
               print(f'current_count={len(icons)}')
+          with open('src/lucide/aliases.json') as f:
+              print(f'current_alias_count={len(json.load(f))}')
           " >> $GITHUB_OUTPUT
 
           # Pobierz aktualną wersję z CHANGELOG (obsługuje różne formaty)
@@ -119,24 +122,41 @@ jobs:
           VERSION: ${{ steps.latest.outputs.latest_version }}
           OLD_COUNT: ${{ steps.current.outputs.current_count }}
           NEW_COUNT: ${{ steps.new_count.outputs.new_count }}
+          OLD_ALIAS_COUNT: ${{ steps.current.outputs.current_alias_count }}
+          NEW_ALIAS_COUNT: ${{ steps.new_count.outputs.alias_count }}
         run: |
-          DATE=$(date +%Y-%m-%d)
+          python - << 'PY'
+          import datetime
+          import os
+          import pathlib
 
-          # Dodaj wpis na początek CHANGELOG
-          cat > /tmp/changelog_entry.md << EOF
-          ## [Unreleased]
+          version = os.environ['VERSION']
+          entry = (
+              f"## {version} ({datetime.date.today():%Y-%m-%d})\n"
+              "\n"
+              f"* Upgrade lucide icons to v{version} "
+              f"({os.environ['OLD_COUNT']} → {os.environ['NEW_COUNT']} icons, "
+              f"{os.environ['OLD_ALIAS_COUNT']} → {os.environ['NEW_ALIAS_COUNT']} aliases)\n"
+              "\n"
+          )
 
-          ### Changed
-          - Updated icons to v${VERSION} (${OLD_COUNT} → ${NEW_COUNT} icons)
+          path = pathlib.Path('CHANGELOG.md')
+          lines = path.read_text().splitlines(keepends=True)
 
-          EOF
+          # Wstaw pod nagłówkiem, gdziekolwiek się znajduje
+          title = next(
+              (n for n, line in enumerate(lines) if line.startswith('# Changelog')),
+              None,
+          )
+          if title is None:
+              raise SystemExit("CHANGELOG.md: '# Changelog' heading not found")
 
-          # Wstaw po pierwszej linii (nagłówku)
-          head -1 CHANGELOG.md > /tmp/new_changelog.md
-          echo "" >> /tmp/new_changelog.md
-          cat /tmp/changelog_entry.md >> /tmp/new_changelog.md
-          tail -n +2 CHANGELOG.md >> /tmp/new_changelog.md
-          mv /tmp/new_changelog.md CHANGELOG.md
+          at = title + 1
+          while at < len(lines) and not lines[at].strip():
+              at += 1
+
+          path.write_text(''.join(lines[:at]) + entry + ''.join(lines[at:]))
+          PY
 
       - name: Create Pull Request
         if: steps.check.outputs.needs_update == 'true'
