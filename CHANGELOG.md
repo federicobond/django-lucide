@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.46.0 (2026-09-14)
+
+* Upgrade lucide icons to v1.46.0 (1791 → 1838 icons, 258 → 264 aliases)
+
 ## 1.38.0 (2026-09-01)
 
 * Upgrade lucide icons to v1.38.0 (1777 → 1791 icons, 258 → 258 aliases)
